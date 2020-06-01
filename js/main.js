@@ -37,6 +37,8 @@ leftMenu.addEventListener(`click`, evt => {
 
 // Модальное окно
 showsList.addEventListener(`click`, evt => {
+  evt.preventDefault();
+
   const target = evt.target;
   const card = target.closest(`.tv-card`);
 
@@ -71,3 +73,21 @@ const modalClickHandler = evt => {
     modalCloseClickHandler();
   }
 };
+
+// Ховер на карточку фильма
+const changeImage = evt => {
+  const target = evt.target;
+  const card = target.closest(`.tv-shows__item`);
+  const img = card.querySelector(`img`);
+
+  if (img) {
+    const backdrop = img.dataset.backdrop;
+
+    if (backdrop) {
+      [img.dataset.backdrop, img.src] = [img.src, img.dataset.backdrop];
+    }
+  }
+};
+
+showsList.addEventListener(`mouseover`, changeImage);
+showsList.addEventListener(`mouseout`, changeImage);
