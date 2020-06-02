@@ -31,7 +31,8 @@ new DBService().getTestData()
     renderCards(response);
   });
 
-const createCardMarkup = (response) => {
+// Создание карточек
+const createCardMarkup = response => {
   const {
     name: title,
     backdrop_path: backdropPath,
