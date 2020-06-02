@@ -50,12 +50,17 @@ class DBService {
     const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU`;
     return this.getData(url);
   }
+
+  getShow(id) {
+    const url = `${this.TMDB_URL}/tv/${id}?api_key=${this.API_KEY}&language=ru-RU`;
+    return this.getData(url);
+  }
 }
 
 // Запрос данных при поиске
 searchForm.addEventListener(`submit`, evt => {
   evt.preventDefault();
-  const value = searchFormInput.value;
+  const value = searchFormInput.value.trim();
 
   if (value) {
     showsSection.append(loading);
@@ -71,6 +76,7 @@ searchForm.addEventListener(`submit`, evt => {
 // Создание карточек
 const createCardMarkup = response => {
   const {
+    id,
     name: title,
     backdrop_path: backdropPath,
     poster_path: posterPath,
@@ -84,7 +90,7 @@ const createCardMarkup = response => {
   const backdrop = `${backdropPath ? `${POSTER_IMG}/${backdropPath}` : ``}`;
 
   return (
-    `<a href="#" class="tv-card">
+    `<a href="#" class="tv-card" data-show-id="${id}">
       ${vote}
       <img class="tv-card__img"
            src="${posterSrc}"
@@ -92,7 +98,7 @@ const createCardMarkup = response => {
            alt="${title}">
       <h4 class="tv-card__head">${title}</h4>
     </a>`
-  )
+  );
 };
 
 const renderCards = response => {
@@ -143,9 +149,33 @@ showsList.addEventListener(`click`, evt => {
   const card = target.closest(`.tv-card`);
 
   if (card) {
-    new DBService().getTestCard()
-      .then(response => {
+    const id = card.dataset.showId;
 
+    new DBService().getShow(id)
+      .then(response => {
+        const {
+          poster_path: poster,
+          genres,
+          name: title,
+          overview,
+          vote_average: rating,
+          homepage,
+        } = response;
+
+        modalImg.src = `${poster ? `${POSTER_IMG}/${poster}` : `${NO_POSTER}`}`;
+        modalImg.alt = title;
+        modalTitle.textContent = title;
+
+        modalGenresList.textContent = ``;
+
+        genres.forEach(genre => {
+          const genreItem = `<li>${genre.name}</li>`;
+          modalGenresList.insertAdjacentHTML(`beforeend`, genreItem);
+        });
+
+        modalRating.textContent = rating;
+        modalDescription.textContent = overview;
+        modalLink.href = homepage;
       });
 
     document.body.style.overflow = `hidden`;
