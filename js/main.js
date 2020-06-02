@@ -1,16 +1,33 @@
 `use strict`;
 const POSTER_IMG = `https://image.tmdb.org/t/p/w185_and_h278_bestv2`;
 const NO_POSTER = `./img/no-poster.jpg`;
-const TMDB_API_KEY = `dad4f8e41037a3b722effc80e41a6e7f`;
 
 const leftMenu = document.querySelector(`.left-menu`);
 const burger = leftMenu.querySelector(`.hamburger`);
-const showsList = document.querySelector(`.tv-shows__list`);
+const showsSection = document.querySelector(`.tv-shows`);
+const showsList = showsSection.querySelector(`.tv-shows__list`);
+
+const searchForm = document.querySelector(`.search__form`);
+const searchFormInput = document.querySelector(`.search__form-input`);
+const loading = document.createElement(`div`);
+loading.className = `loading`;
+
 const modal = document.querySelector(`.modal`);
 const modalClose = modal.querySelector(`.cross`);
+const modalImg = modal.querySelector(`.tv-card__img`);
+const modalTitle = modal.querySelector(`.modal__title`);
+const modalGenresList = modal.querySelector(`.genres-list`);
+const modalRating = modal.querySelector(`.rating`);
+const modalDescription = modal.querySelector(`.description`);
+const modalLink = modal.querySelector(`.modal__link`);
 
 // Загрузка данных
 class DBService {
+  constructor() {
+    this.API_KEY = `dad4f8e41037a3b722effc80e41a6e7f`;
+    this.TMDB_URL = `https://api.themoviedb.org/3`;
+  }
+
   async getData(url) {
     const response = await fetch(url);
 
@@ -21,15 +38,35 @@ class DBService {
     }
   }
 
-  async getTestData() {
+  getTestData() {
     return this.getData(`test.json`);
+  }
+
+  getTestCard() {
+    return this.getData(`card.json`);
+  }
+
+  getSearchResult(query) {
+    const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU`;
+    return this.getData(url);
   }
 }
 
-new DBService().getTestData()
-  .then((response) => {
-    renderCards(response);
-  });
+// Запрос данных при поиске
+searchForm.addEventListener(`submit`, evt => {
+  evt.preventDefault();
+  const value = searchFormInput.value;
+
+  if (value) {
+    showsSection.append(loading);
+
+    new DBService().getSearchResult(value).then((response) => {
+      renderCards(response);
+    });
+  }
+
+  searchFormInput.value = ``;
+});
 
 // Создание карточек
 const createCardMarkup = response => {
@@ -39,6 +76,8 @@ const createCardMarkup = response => {
     poster_path: posterPath,
     vote_average: voteAverage,
   } = response;
+
+  loading.remove();
 
   const vote = `${voteAverage ? `<span class="tv-card__vote">${voteAverage}</span>` : ``}`;
   const posterSrc = `${posterPath ? `${POSTER_IMG}/${posterPath}` : `${NO_POSTER}`}`;
@@ -104,6 +143,11 @@ showsList.addEventListener(`click`, evt => {
   const card = target.closest(`.tv-card`);
 
   if (card) {
+    new DBService().getTestCard()
+      .then(response => {
+
+      });
+
     document.body.style.overflow = `hidden`;
     modal.classList.remove(`hide`);
     modal.addEventListener(`click`, modalClickHandler);
