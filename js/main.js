@@ -2,11 +2,19 @@
 const POSTER_IMG = `https://image.tmdb.org/t/p/w185_and_h278_bestv2`;
 const NO_POSTER = `./img/no-poster.jpg`;
 
+const SearchText = {
+  NO_RESULTS: `Ничего не найдено`,
+  SHOW_RESULTS: `Результаты поиска`,
+  INITIAL: `Введите название сериала в поисковую строку`,
+};
+
 const leftMenu = document.querySelector(`.left-menu`);
 const burger = leftMenu.querySelector(`.hamburger`);
 const dropdownCollection = leftMenu.querySelectorAll(`.dropdown`);
 const showsSection = document.querySelector(`.tv-shows`);
 const showsList = showsSection.querySelector(`.tv-shows__list`);
+const showsHeading = showsSection.querySelector(`.tv-shows__head`);
+showsHeading.textContent = SearchText.INITIAL;
 
 const searchForm = document.querySelector(`.search__form`);
 const searchFormInput = document.querySelector(`.search__form-input`);
@@ -40,14 +48,6 @@ class DBService {
     }
   }
 
-  getTestData() {
-    return this.getData(`test.json`);
-  }
-
-  getTestCard() {
-    return this.getData(`card.json`);
-  }
-
   getSearchResult(query) {
     const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU`;
     return this.getData(url);
@@ -56,6 +56,14 @@ class DBService {
   getShow(id) {
     const url = `${this.TMDB_URL}/tv/${id}?api_key=${this.API_KEY}&language=ru-RU`;
     return this.getData(url);
+  }
+
+  getTestData() {
+    return this.getData(`test.json`);
+  }
+
+  getTestCard() {
+    return this.getData(`card.json`);
   }
 }
 
@@ -85,8 +93,6 @@ const createCardMarkup = response => {
     vote_average: voteAverage,
   } = response;
 
-  loading.remove();
-
   const vote = `${voteAverage ? `<span class="tv-card__vote">${voteAverage}</span>` : ``}`;
   const posterSrc = `${posterPath ? `${POSTER_IMG}/${posterPath}` : `${NO_POSTER}`}`;
   const backdrop = `${backdropPath ? `${POSTER_IMG}/${backdropPath}` : ``}`;
@@ -105,8 +111,18 @@ const createCardMarkup = response => {
 
 const renderCards = response => {
   showsList.textContent = ``;
+  loading.remove();
+
+  const {total_results: totalResults} = response;
+
+  if (!totalResults) {
+    showsHeading.textContent = SearchText.NO_RESULTS;
+    return;
+  }
 
   response.results.forEach(result => {
+    showsHeading.textContent = SearchText.SHOW_RESULTS;
+
     const card = document.createElement(`li`);
     card.className = `tv-shows__item`;
     card.insertAdjacentHTML(`beforeend`, createCardMarkup(result));
