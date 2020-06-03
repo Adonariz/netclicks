@@ -5,7 +5,11 @@ const NO_POSTER = `./img/no-poster.jpg`;
 const SearchText = {
   NO_RESULTS: `Ничего не найдено`,
   SHOW_RESULTS: `Результаты поиска`,
-  INITIAL: `Введите название сериала в поисковую строку`,
+  TOP_RATED: `Топ сериалы`,
+  POPULAR: `Популярное`,
+  TODAY: `Новые эпизоды`,
+  WEEK: `Расписание на неделю`,
+  INITIAL: ``,
 };
 
 const leftMenu = document.querySelector(`.left-menu`);
@@ -58,13 +62,33 @@ class DBService {
     return this.getData(url);
   }
 
-  getTestData() {
-    return this.getData(`test.json`);
+  getTopRated() {
+    const url = `${this.TMDB_URL}/tv/top_rated?api_key=${this.API_KEY}&language=ru-RU`;
+    return this.getData(url);
   }
 
-  getTestCard() {
-    return this.getData(`card.json`);
+  getPopular() {
+    const url = `${this.TMDB_URL}/tv/popular?api_key=${this.API_KEY}&language=ru-RU`;
+    return this.getData(url);
   }
+
+  getToday() {
+    const url = `${this.TMDB_URL}/tv/airing_today?api_key=${this.API_KEY}&language=ru-RU`;
+    return this.getData(url);
+  }
+
+  getWeek() {
+    const url = `${this.TMDB_URL}/tv/on_the_air?api_key=${this.API_KEY}&language=ru-RU`;
+    return this.getData(url);
+  }
+
+  // getTestData() {
+  //   return this.getData(`test.json`);
+  // }
+  //
+  // getTestCard() {
+  //   return this.getData(`card.json`);
+  // }
 }
 
 // Запрос данных при поиске
@@ -150,11 +174,39 @@ document.addEventListener(`click`, evt => {
 leftMenu.addEventListener(`click`, evt => {
   const target = evt.target;
   const dropdown = target.closest(`.dropdown`);
+  const topRated = target.closest(`#top-rated`);
+  const popular = target.closest(`#popular`);
+  const today = target.closest(`#today`);
+  const week = target.closest(`#week`);
 
   if (dropdown) {
     dropdown.classList.toggle(`active`);
     leftMenu.classList.add(`openMenu`);
     burger.classList.add(`open`);
+  }
+
+  if (topRated) {
+    new DBService().getTopRated()
+      .then(response => renderCards(response))
+      .finally(() => showsHeading.textContent = SearchText.TOP_RATED);
+  }
+
+  if (popular) {
+    new DBService().getPopular()
+      .then(response => renderCards(response))
+      .finally(() => showsHeading.textContent = SearchText.POPULAR);
+  }
+
+  if (today) {
+    new DBService().getToday()
+      .then(response => renderCards(response))
+      .finally(() => showsHeading.textContent = SearchText.TODAY);
+  }
+
+  if (week) {
+    new DBService().getWeek()
+      .then(response => renderCards(response))
+      .finally(() => showsHeading.textContent = SearchText.WEEK);
   }
 });
 
