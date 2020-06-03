@@ -4,11 +4,13 @@ const NO_POSTER = `./img/no-poster.jpg`;
 
 const leftMenu = document.querySelector(`.left-menu`);
 const burger = leftMenu.querySelector(`.hamburger`);
+const dropdownCollection = leftMenu.querySelectorAll(`.dropdown`);
 const showsSection = document.querySelector(`.tv-shows`);
 const showsList = showsSection.querySelector(`.tv-shows__list`);
 
 const searchForm = document.querySelector(`.search__form`);
 const searchFormInput = document.querySelector(`.search__form-input`);
+
 const loading = document.createElement(`div`);
 loading.className = `loading`;
 
@@ -120,7 +122,6 @@ burger.addEventListener(`click`, () => {
 
 document.addEventListener(`click`, evt => {
   const target = evt.target;
-  const dropdownCollection = leftMenu.querySelectorAll(`.dropdown`);
 
   if (!target.closest(`.left-menu`)) {
     leftMenu.classList.remove(`openMenu`);
