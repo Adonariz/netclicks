@@ -5,10 +5,6 @@ const NO_POSTER = `./img/no-poster.jpg`;
 const SearchText = {
   NO_RESULTS: `Ничего не найдено`,
   SHOW_RESULTS: `Результаты поиска`,
-  TOP_RATED: `Топ сериалы`,
-  POPULAR: `Популярное`,
-  TODAY: `Новые эпизоды`,
-  WEEK: `Расписание на неделю`,
   INITIAL: ``,
 };
 
@@ -91,6 +87,8 @@ class DBService {
   // }
 }
 
+const dbService = new DBService();
+
 // Запрос данных при поиске
 searchForm.addEventListener(`submit`, evt => {
   evt.preventDefault();
@@ -99,7 +97,7 @@ searchForm.addEventListener(`submit`, evt => {
   if (value) {
     showsSection.append(loading);
 
-    new DBService().getSearchResult(value).then((response) => {
+    dbService.getSearchResult(value).then((response) => {
       renderCards(response);
     });
   }
@@ -133,7 +131,7 @@ const createCardMarkup = response => {
   );
 };
 
-const renderCards = response => {
+const renderCards = (response, target) => {
   showsList.textContent = ``;
   loading.remove();
 
@@ -144,9 +142,9 @@ const renderCards = response => {
     return;
   }
 
-  response.results.forEach(result => {
-    showsHeading.textContent = SearchText.SHOW_RESULTS;
+  showsHeading.textContent = target ? target.textContent : SearchText.SHOW_RESULTS;
 
+  response.results.forEach(result => {
     const card = document.createElement(`li`);
     card.className = `tv-shows__item`;
     card.insertAdjacentHTML(`beforeend`, createCardMarkup(result));
@@ -186,27 +184,23 @@ leftMenu.addEventListener(`click`, evt => {
   }
 
   if (topRated) {
-    new DBService().getTopRated()
-      .then(response => renderCards(response))
-      .finally(() => showsHeading.textContent = SearchText.TOP_RATED);
+    dbService.getTopRated()
+      .then(response => renderCards(response, target))
   }
 
   if (popular) {
-    new DBService().getPopular()
-      .then(response => renderCards(response))
-      .finally(() => showsHeading.textContent = SearchText.POPULAR);
+    dbService.getPopular()
+      .then(response => renderCards(response, target))
   }
 
   if (today) {
-    new DBService().getToday()
-      .then(response => renderCards(response))
-      .finally(() => showsHeading.textContent = SearchText.TODAY);
+    dbService.getToday()
+      .then(response => renderCards(response, target))
   }
 
   if (week) {
-    new DBService().getWeek()
-      .then(response => renderCards(response))
-      .finally(() => showsHeading.textContent = SearchText.WEEK);
+    dbService.getWeek()
+      .then(response => renderCards(response, target))
   }
 });
 
@@ -220,7 +214,7 @@ showsList.addEventListener(`click`, evt => {
   if (card) {
     const id = card.dataset.showId;
 
-    new DBService().getShow(id)
+    dbService.getShow(id)
       .then(response => {
         const {
           poster_path: poster,
