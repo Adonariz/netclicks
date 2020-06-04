@@ -2,11 +2,18 @@
 const POSTER_IMG = `https://image.tmdb.org/t/p/w185_and_h278_bestv2`;
 const NO_POSTER = `./img/no-poster.jpg`;
 
+const SearchText = {
+  NO_RESULTS: `Ничего не найдено`,
+  SHOW_RESULTS: `Результаты поиска`,
+};
+
 const leftMenu = document.querySelector(`.left-menu`);
 const burger = leftMenu.querySelector(`.hamburger`);
 const dropdownCollection = leftMenu.querySelectorAll(`.dropdown`);
 const showsSection = document.querySelector(`.tv-shows`);
 const showsList = showsSection.querySelector(`.tv-shows__list`);
+const showsHeading = showsSection.querySelector(`.tv-shows__head`);
+const pagination = showsSection.querySelector(`.pagination`);
 
 const searchForm = document.querySelector(`.search__form`);
 const searchFormInput = document.querySelector(`.search__form-input`);
@@ -40,16 +47,8 @@ class DBService {
     }
   }
 
-  getTestData() {
-    return this.getData(`test.json`);
-  }
-
-  getTestCard() {
-    return this.getData(`card.json`);
-  }
-
-  getSearchResult(query) {
-    const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU`;
+  getSearchResult(query, page = 1) {
+    const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
@@ -57,7 +56,37 @@ class DBService {
     const url = `${this.TMDB_URL}/tv/${id}?api_key=${this.API_KEY}&language=ru-RU`;
     return this.getData(url);
   }
+
+  getTopRated(page = 1) {
+    const url = `${this.TMDB_URL}/tv/top_rated?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
+    return this.getData(url);
+  }
+
+  getPopular(page = 1) {
+    const url = `${this.TMDB_URL}/tv/popular?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
+    return this.getData(url);
+  }
+
+  getToday(page = 1) {
+    const url = `${this.TMDB_URL}/tv/airing_today?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
+    return this.getData(url);
+  }
+
+  getWeek(page = 1) {
+    const url = `${this.TMDB_URL}/tv/on_the_air?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
+    return this.getData(url);
+  }
+
+  // getTestData() {
+  //   return this.getData(`test.json`);
+  // }
+  //
+  // getTestCard() {
+  //   return this.getData(`card.json`);
+  // }
 }
+
+const dbService = new DBService();
 
 // Запрос данных при поиске
 searchForm.addEventListener(`submit`, evt => {
@@ -67,7 +96,7 @@ searchForm.addEventListener(`submit`, evt => {
   if (value) {
     showsSection.append(loading);
 
-    new DBService().getSearchResult(value).then((response) => {
+    dbService.getSearchResult(value).then((response) => {
       renderCards(response);
     });
   }
@@ -85,8 +114,6 @@ const createCardMarkup = response => {
     vote_average: voteAverage,
   } = response;
 
-  loading.remove();
-
   const vote = `${voteAverage ? `<span class="tv-card__vote">${voteAverage}</span>` : ``}`;
   const posterSrc = `${posterPath ? `${POSTER_IMG}/${posterPath}` : `${NO_POSTER}`}`;
   const backdrop = `${backdropPath ? `${POSTER_IMG}/${backdropPath}` : ``}`;
@@ -103,8 +130,22 @@ const createCardMarkup = response => {
   );
 };
 
-const renderCards = response => {
+const renderCards = (response, target = null) => {
   showsList.textContent = ``;
+  pagination.textContent = ``;
+  loading.remove();
+
+  const {
+    total_results: totalResults,
+    total_pages: totalPages,
+  } = response;
+
+  if (!totalResults) {
+    showsHeading.textContent = SearchText.NO_RESULTS;
+    return;
+  }
+
+  showsHeading.textContent = target ? target.textContent : SearchText.SHOW_RESULTS;
 
   response.results.forEach(result => {
     const card = document.createElement(`li`);
@@ -112,6 +153,12 @@ const renderCards = response => {
     card.insertAdjacentHTML(`beforeend`, createCardMarkup(result));
     showsList.append(card);
   });
+
+  // if (totalPages > 1) {
+  //   for (let i = 1; i <= totalPages; i++) {
+  //     pagination.innerHTML += `<li><a href="#" class="pages">${i}</a></li>`
+  //   }
+  // }
 };
 
 // Управление меню
@@ -134,11 +181,35 @@ document.addEventListener(`click`, evt => {
 leftMenu.addEventListener(`click`, evt => {
   const target = evt.target;
   const dropdown = target.closest(`.dropdown`);
+  const topRated = target.closest(`#top-rated`);
+  const popular = target.closest(`#popular`);
+  const today = target.closest(`#today`);
+  const week = target.closest(`#week`);
 
   if (dropdown) {
     dropdown.classList.toggle(`active`);
     leftMenu.classList.add(`openMenu`);
     burger.classList.add(`open`);
+  }
+
+  if (topRated) {
+    dbService.getTopRated()
+      .then(response => renderCards(response, target))
+  }
+
+  if (popular) {
+    dbService.getPopular()
+      .then(response => renderCards(response, target))
+  }
+
+  if (today) {
+    dbService.getToday()
+      .then(response => renderCards(response, target))
+  }
+
+  if (week) {
+    dbService.getWeek()
+      .then(response => renderCards(response, target))
   }
 });
 
@@ -152,7 +223,7 @@ showsList.addEventListener(`click`, evt => {
   if (card) {
     const id = card.dataset.showId;
 
-    new DBService().getShow(id)
+    dbService.getShow(id)
       .then(response => {
         const {
           poster_path: poster,
@@ -227,3 +298,15 @@ const changeImage = evt => {
 
 showsList.addEventListener(`mouseover`, changeImage);
 showsList.addEventListener(`mouseout`, changeImage);
+
+// Пагинация
+// pagination.addEventListener(`click`, evt => {
+//   evt.preventDefault();
+//
+//   const target = evt.target;
+//   const page = target.closest(`.pages`);
+//
+//   if (page) {
+//
+//   }
+// });
