@@ -5,7 +5,6 @@ const NO_POSTER = `./img/no-poster.jpg`;
 const SearchText = {
   NO_RESULTS: `Ничего не найдено`,
   SHOW_RESULTS: `Результаты поиска`,
-  INITIAL: ``,
 };
 
 const leftMenu = document.querySelector(`.left-menu`);
@@ -14,7 +13,7 @@ const dropdownCollection = leftMenu.querySelectorAll(`.dropdown`);
 const showsSection = document.querySelector(`.tv-shows`);
 const showsList = showsSection.querySelector(`.tv-shows__list`);
 const showsHeading = showsSection.querySelector(`.tv-shows__head`);
-showsHeading.textContent = SearchText.INITIAL;
+const pagination = showsSection.querySelector(`.pagination`);
 
 const searchForm = document.querySelector(`.search__form`);
 const searchFormInput = document.querySelector(`.search__form-input`);
@@ -48,8 +47,8 @@ class DBService {
     }
   }
 
-  getSearchResult(query) {
-    const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU`;
+  getSearchResult(query, page = 1) {
+    const url = `${this.TMDB_URL}/search/tv?api_key=${this.API_KEY}&query=${query}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
@@ -58,23 +57,23 @@ class DBService {
     return this.getData(url);
   }
 
-  getTopRated() {
-    const url = `${this.TMDB_URL}/tv/top_rated?api_key=${this.API_KEY}&language=ru-RU`;
+  getTopRated(page = 1) {
+    const url = `${this.TMDB_URL}/tv/top_rated?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
-  getPopular() {
-    const url = `${this.TMDB_URL}/tv/popular?api_key=${this.API_KEY}&language=ru-RU`;
+  getPopular(page = 1) {
+    const url = `${this.TMDB_URL}/tv/popular?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
-  getToday() {
-    const url = `${this.TMDB_URL}/tv/airing_today?api_key=${this.API_KEY}&language=ru-RU`;
+  getToday(page = 1) {
+    const url = `${this.TMDB_URL}/tv/airing_today?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
-  getWeek() {
-    const url = `${this.TMDB_URL}/tv/on_the_air?api_key=${this.API_KEY}&language=ru-RU`;
+  getWeek(page = 1) {
+    const url = `${this.TMDB_URL}/tv/on_the_air?api_key=${this.API_KEY}&language=ru-RU&page=${page}`;
     return this.getData(url);
   }
 
@@ -131,11 +130,15 @@ const createCardMarkup = response => {
   );
 };
 
-const renderCards = (response, target) => {
+const renderCards = (response, target = null) => {
   showsList.textContent = ``;
+  pagination.textContent = ``;
   loading.remove();
 
-  const {total_results: totalResults} = response;
+  const {
+    total_results: totalResults,
+    total_pages: totalPages,
+  } = response;
 
   if (!totalResults) {
     showsHeading.textContent = SearchText.NO_RESULTS;
@@ -150,6 +153,12 @@ const renderCards = (response, target) => {
     card.insertAdjacentHTML(`beforeend`, createCardMarkup(result));
     showsList.append(card);
   });
+
+  // if (totalPages > 1) {
+  //   for (let i = 1; i <= totalPages; i++) {
+  //     pagination.innerHTML += `<li><a href="#" class="pages">${i}</a></li>`
+  //   }
+  // }
 };
 
 // Управление меню
@@ -289,3 +298,15 @@ const changeImage = evt => {
 
 showsList.addEventListener(`mouseover`, changeImage);
 showsList.addEventListener(`mouseout`, changeImage);
+
+// Пагинация
+// pagination.addEventListener(`click`, evt => {
+//   evt.preventDefault();
+//
+//   const target = evt.target;
+//   const page = target.closest(`.pages`);
+//
+//   if (page) {
+//
+//   }
+// });
